@@ -10,32 +10,31 @@ const PATH = {
 };
 
 const init = async () => {
-  const server = Hapi.server({
-    port,
+    const server = Hapi.server({
+        port,
+    });
 
-  });
+    await server.register(require('@hapi/inert'));
 
-  await server.register(require('@hapi/inert'));
+    server.route({
+        method: 'GET',
+        path: '/{path*}',
+        handler: (request, h) => {
+            if (FILES.test(request.path)) {
+                return h.file(path.join(process.cwd(), 'dist', request.path));
+            }
 
-  server.route({
-    method: 'GET',
-    path: '/{path*}',
-    handler: (request, h) => {
-      if (FILES.test(request.path)) {
-        return h.file(path.join(process.cwd(), 'dist', request.path));
-      }
+            return h.file(path.join(process.cwd(), 'dist', PATH[request.path]));
+        }
+    });
 
-      return h.file(path.join(process.cwd(), 'dist', PATH[request.path]));
-    }
-  });
-
-  await server.start();
-
+    await server.start();
+    console.log('Server running on %s', server.info.uri);
 };
 
 process.on('unhandledRejection', (err) => {
-  console.log(err);
-  process.exit(1);
+    console.log(err);
+    process.exit(1);
 });
 
 init();
